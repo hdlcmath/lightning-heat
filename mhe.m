@@ -60,7 +60,7 @@ end
 
 % Plot geometry, collocation and Newman poles
 figure(1); clf;
-fill(real(vv),imag(vv),'w'); hold on; grid on;
+fill(real(vv),imag(vv),'w','handlevisibility','off'); hold on; grid on;
 axis padded equal;
 plot(nm_pols,'.','displayname','Newman Poles');
 plot(real(r_pols),imag(r_pols),'*','displayname','Runge Pole(s)');
@@ -73,16 +73,20 @@ up=@(z,s)psi(0,z,source,s);
 
 s=-10+8i;
 F=@(z)-up(z,s);
+tic
 [uh,residuals]=solve_mhe(cols,F,r_pols,r_orders,nm_pols,s);
-
+fprintf('Helmholtz problem solved in %.2f\n',toc)
 
 % Plot particular/homogenous part and solution
 bds=[-4,4];
 zz=linspace(bds(1),bds(2),300);
 Z=zz+1i*zz.';
+
+tic
 Up=up(Z,s);
 Uh=uh(Z);
 solution=Up+Uh;
+fprintf('Helmholtz problem evaluted on grid in %.2f\n',toc)
 
 figure(2); clf
 tiledlayout(1,3)
@@ -90,19 +94,19 @@ tiledlayout(1,3)
 nexttile
 I=pcolor(real(Z),imag(Z),abs(real(Up))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
-axis equal; axis([bds,bds]); title('$u_p$','interpreter','latex')
+axis equal; axis([bds,bds]); title('$\tilde{u}_p$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w');
 
 nexttile
 I=pcolor(real(Z),imag(Z),abs(real(Uh))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
-axis equal; axis([bds,bds]); title('$u_h$','interpreter','latex')
+axis equal; axis([bds,bds]); title('$\tilde{u}_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
 
 nexttile
 I=pcolor(real(Z),imag(Z),abs(real(solution))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
-axis equal; axis([bds,bds]); title('$u=u_p+u_h$','interpreter','latex')
+axis equal; axis([bds,bds]); title('$\tilde{u}=\tilde{u}_p+\tilde{u}_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
 
 %% Functions

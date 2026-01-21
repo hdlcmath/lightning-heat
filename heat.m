@@ -2,8 +2,10 @@ clear; clc;
 
 % Heat solver
 
-
-m=50; % Newman poles per corner
+% Important Parameters
+m=20; % Newman poles per corner
+t=0.3; % Time of heat solution
+M=9; % Evals/points in inverse laplace transform quadrature
 
 vv=[1+1i,2i,-1+1i,-1-1i,1-1i]; % Vertices
 r_pols=0.25i;
@@ -60,7 +62,7 @@ end
 
 % Plot geometry, collocation and Newman poles
 figure(1); clf;
-fill(real(vv),imag(vv),'w'); hold on; grid on;
+fill(real(vv),imag(vv),'w','handlevisibility','off'); hold on; grid on;
 axis padded equal;
 plot(nm_pols,'.','displayname','Newman Poles');
 plot(real(r_pols),imag(r_pols),'*','displayname','Runge Pole(s)');
@@ -71,36 +73,68 @@ legend
 source=3+2i;
 up=@(z,s)psi(0,z,source,s);
 
-t=0.3; % Time of heat solution
-M=9; % Evals/points in inverse laplace transform quadrature
 
-mhe_uh=cell{1,M};
+uh_mhe=cell(1,M);
 [ww,ss]=ilt_quadrature(t,M);
+hsolve=tic;
 for j=1:M
-	s=-10+8i;
-	F=@(z)-up(z,s);
-	[uh,residuals]=solve_mhe(cols,F,r_pols,r_orders,nm_pols,s);
-	mhe_uh{j}=uh;
-
-
+	F=@(z)-up(z,ss(j));
+	tic
+	[uh_tmp,residuals]=solve_mhe(cols,F,r_pols,r_orders,nm_pols,ss(j));
+	fprintf('Helmholtz problem %.f/%.f solved in %.2f\n',j,M,toc)
+	uh_mhe{j}=uh_tmp;
 end	
+fprintf('Heat problem solved in %.2f\n',toc(hsolve))
 	
 % Plot particular/homogenous part and solution
 bds=[-4,4];
 zz=linspace(bds(1),bds(2),300);
 Z=zz+1i*zz.';
-Up=up(Z,s);
-Uh=uh(Z);
-solution=Up+Uh;
+
+% Get helmholtz solutions
+Up_mhe=cell(1,M);
+Uh_mhe=cell(1,M);
+U_mhe=cell(1,M);
+heval=tic;
+for j=1:M
+	tic
+	Up_mhe{j}=up(Z,ss(j));
+	Uh_mhe{j}=uh_mhe{j}(Z);
+	U_mhe{j}=Up_mhe{j}+Uh_mhe{j};
+	fprintf('Helmholtz problem %.f/%.f evaluated on grid in %.2f\n',j,M,toc)
+end
+fprintf('Heat problem evaluted on grid in %.2f\n',toc(heval))
 
 figure(2); clf
+tiledlayout('flow')
+
+for j=1:M
+	nexttile
+	I=pcolor(real(Z),imag(Z),abs(real(U_mhe{j}))); set(I,'EdgeColor','none')
+	colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
+	axis equal; axis([bds,bds]); 
+	title(['$\tilde{u}_p$ for $s=$',num2str(ss(j),'%.2f')],'interpreter','latex');
+	hold on; fill(real(vv),imag(vv),'w');
+end
+
+% Sum MHE solutions to get heat solution
+Up=zeros(size(Up_mhe{1}));
+Uh=Up; U=Up;
+for j=1:M
+	Up=Up+ww(j)*Up_mhe{j};
+	Uh=Uh+ww(j)*Uh_mhe{j};
+	U=Up+Uh;
+end
+Up=real(Up/(M*1i)); Uh=real(Uh/(M*1i)); U=real(U/(M*1i));
+
+figure(3); clf
 tiledlayout(1,3)
 
 nexttile
 I=pcolor(real(Z),imag(Z),abs(real(Up))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
-axis equal; axis([bds,bds]); title('$u_p$','interpreter','latex')
-hold on; fill(real(vv),imag(vv),'w');
+axis equal; axis([bds,bds]); title('$u_h$','interpreter','latex')
+hold on; fill(real(vv),imag(vv),'w')
 
 nexttile
 I=pcolor(real(Z),imag(Z),abs(real(Uh))); set(I,'EdgeColor','none')
@@ -109,7 +143,7 @@ axis equal; axis([bds,bds]); title('$u_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
 
 nexttile
-I=pcolor(real(Z),imag(Z),abs(real(solution))); set(I,'EdgeColor','none')
+I=pcolor(real(Z),imag(Z),abs(real(U))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
 axis equal; axis([bds,bds]); title('$u=u_p+u_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
@@ -124,6 +158,21 @@ function out=psi(n,z,xi,s)
 	arg=sqrt(s)*abs(dd);
 	out=besselk(abs(n),arg).*dd.^n./abs(dd).^n/(2*pi);
 end
+
+function [qW,qP] = ilt_quadrature(t,M)
+% Given a value of t, output a vector of weights and M points for inverse laplace transform
+
+th = (.5:M-.5)*pi/M; % Vector of theta to go in parametrization
+sg = -0.6122; mu = 0.5017; bt = 0.6407; nu = 0.2645;
+z=@(th,t) 2*M./t.*(sg + mu*th.*cot(bt*th)+nu*1i*th);
+dz=@(th,t) 2*M./t.*(mu*cot(bt*th)...
+		-mu*bt*th.*csc(bt*th).^2+nu*1i);
+	
+qP = z(th,t);
+qW = exp(z(th,t)*t).*dz(th,t);
+
+end
+
 
 function [uh,residuals]=solve_mhe(col,F,r_pols,r_order,nm_pols,s)
 	cc=col(:);
