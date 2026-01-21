@@ -50,7 +50,7 @@ for j=1:length(vv)
 end
 
 % Get collocation points
-N_c_halfedge=ceil(N_c*edge_lengths/max(edge_lengths)/2);
+N_c_halfedge=ceil(N_c*edge_lengths/sum(edge_lengths)/2);
 cols=[];
 for j=1:length(vv)
 	N=N_c_halfedge(j);

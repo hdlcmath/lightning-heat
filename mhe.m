@@ -3,7 +3,7 @@ clear; clc;
 % Modified Helmholtz Equation solver
 
 
-m=50; % Newman poles per corner
+m=20; % Newman poles per corner
 
 vv=[1+1i,2i,-1+1i,-1-1i,1-1i]; % Vertices
 r_pols=0.25i;
@@ -48,7 +48,7 @@ for j=1:length(vv)
 end
 
 % Get collocation points
-N_c_halfedge=ceil(N_c*edge_lengths/max(edge_lengths)/2);
+N_c_halfedge=ceil(N_c*edge_lengths/sum(edge_lengths)/2);
 cols=[];
 for j=1:length(vv)
 	N=N_c_halfedge(j);
