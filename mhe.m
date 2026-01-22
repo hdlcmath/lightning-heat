@@ -3,7 +3,7 @@ clear; clc;
 % Modified Helmholtz Equation solver
 
 
-m=20; % Newman poles per corner
+m=60; % Newman poles per corner
 
 vv=[1+1i,2i,-1+1i,-1-1i,1-1i]; % Vertices
 r_pols=0.25i;
@@ -76,6 +76,7 @@ s=-10+8i;
 F=@(z)-up(z,s);
 tic
 [uh,residuals]=solve_mhe(cols,F,r_pols,r_orders,nm_pols,s);
+u=@(z)uh(z)+up(z,s); % Function handle of the solution
 fprintf('Helmholtz problem solved in %.2f\n',toc)
 
 % Plot particular/homogenous part and solution
@@ -86,7 +87,7 @@ Z=zz+1i*zz.';
 tic
 Up=up(Z,s);
 Uh=uh(Z);
-solution=Up+Uh;
+U=Up+Uh;
 fprintf('Helmholtz problem evaluted on grid in %.2f\n',toc)
 
 figure(2); clf
@@ -105,14 +106,37 @@ axis equal; axis([bds,bds]); title('$\tilde{u}_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
 
 nexttile
-I=pcolor(real(Z),imag(Z),abs(real(solution))); set(I,'EdgeColor','none')
+I=pcolor(real(Z),imag(Z),abs(real(U))); set(I,'EdgeColor','none')
 colorbar; colormap jet; set(gca,'colorscale','log'); clim([1e-10,1])
 axis equal; axis([bds,bds]); title('$\tilde{u}=\tilde{u}_p+\tilde{u}_h$','interpreter','latex')
 hold on; fill(real(vv),imag(vv),'w')
 
+% Get oversampled grid on boundary and evaluate
+
+N_s_halfedge=3*N_c_halfedge;
+samps=[];
+bdp=[]; % Boundary parametrization
+for j=1:length(vv)
+	N=N_s_halfedge(j);
+	c1=samp_cluster_to(.5,0,N,m);
+	c2=samp_cluster_to(.5,1,N,m);
+	tt=[flip(c1),c2];
+	samps=[samps,gamma{j}(tt)];
+	bdp=[bdp,tt+j-1];
+end
+U_oversampled=u(samps);
+
+figure(3); clf;
+semilogy(bdp,abs(U_oversampled),'k.','displayname','abs')
+hold on
+semilogy(bdp,abs(real(U_oversampled)),'r-','displayname','real')
+semilogy(bdp,abs(imag(U_oversampled)),'b-','displayname','imag')
+grid on
+yline(max(abs(U_oversampled)),'k--','Einf')
+fprintf('Einf error: %.6e\n',max(abs(U_oversampled)))
+
 %% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 
 function out=psi(n,z,xi,s)
@@ -127,7 +151,6 @@ function [uh,residuals]=solve_mhe(col,F,r_pols,r_order,nm_pols,s)
 	A=get_problem_matrix(cc,r_pols,r_order,nm_pols,s);
 	normA=vecnorm(A); scaledA=A./normA;
 	coefs=scaledA\col_val;
-	
 	uh=@(z)eval_solution(z,coefs./normA(:));
 	residuals=0;
 
@@ -137,7 +160,6 @@ function [uh,residuals]=solve_mhe(col,F,r_pols,r_order,nm_pols,s)
 		U=A*coefs;
 		out=reshape(U,size(z));
 	end
-
 end
 
 function out=get_problem_matrix(in_pts,r_pols,r_order,nm_pols,s)
@@ -162,7 +184,6 @@ function out=get_runge_part(in_pts,r_pols,r_order,s)
 		out=[out,tmp];
 	end
 end
-
 
 function out=get_newman_part(in_pts,nm_pols,s)
 	zz=in_pts(:);
