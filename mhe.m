@@ -44,6 +44,7 @@ for j=1:length(vv)
 	a=vv(jplus)-outward;
 
 	tmp_pols=nm_cluster_to(a,b,m,beta); 
+	inds=find(abs(tmp_pols-b)<2e-16); tmp_pols(inds)=0;
 	nm_pols=[nm_pols,tmp_pols];
 end
 
@@ -186,9 +187,16 @@ function out = nm_cluster_to(a,b,N,beta)
 	out=tmp;
 end
 
-
 function out = col_cluster_to(a,b,N,m)
 	sg=sqrt(2*(m+1))*pi;
+	v=linspace(0,1,N);
+	rate=1-exp(-sg*v);
+	tmp = (b-a)*rate+a;
+	out = tmp;
+end
+
+function out = samp_cluster_to(a,b,N,m)
+	sg=sqrt(2*(m+1))*pi+log(10);
 	v=linspace(0,1,N);
 	rate=1-exp(-sg*v);
 	tmp = (b-a)*rate+a;

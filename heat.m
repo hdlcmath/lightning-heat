@@ -46,6 +46,7 @@ for j=1:length(vv)
 	a=vv(jplus)-outward;
 
 	tmp_pols=nm_cluster_to(a,b,m,beta); 
+	inds=find(abs(tmp_pols-b)<2e-16); tmp_pols(inds)=0;
 	nm_pols=[nm_pols,tmp_pols];
 end
 
