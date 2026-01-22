@@ -35,10 +35,11 @@ for j=1:length(vv)
 
 	vbwd=gamma{j}(1-epsilon)-vv(jplus);
 	vfwd=gamma{jplus}(epsilon)-vv(jplus);
+	vang=-vfwd/vbwd;
 
-	outward=1i*vbwd*sqrt(-vfwd/vbwd);
-	outward=r*outward./abs(outward);
-	vang=vfwd/vbwd; beta=abs(angle(vang))/pi+1;
+	outward=1i*vbwd*sqrt(vang);
+	outward=r*outward/abs(outward);
+       	beta=abs(angle(vang))/pi+1;
 
 	b=vv(jplus);
 	a=vv(jplus)-outward;
