@@ -2,8 +2,8 @@ clear; clc;
 
 % Modified Helmholtz Equation solver
 
-
-m=60; % Newman poles per corner
+% Important Parameters
+m=50; % Newman poles per corner
 
 vv=[1+1i,2i,-1+1i,-1-1i,1-1i]; % Vertices
 r_pols=0.25i;
@@ -23,7 +23,7 @@ N_nm=length(vv)*m;
 N_terms=2*(N_nm+N_r*length(r_pols))+1;
 N_dofs=2*N_terms;
 N_c=col_factor*N_dofs;
-r_orders=N_r*ones(1,length(vv));
+r_orders=N_r*ones(1,length(r_pols));
 
 % Get the Newman poles
 edge_lengths=abs(vv-vv([2:length(vv),1]));
@@ -45,7 +45,7 @@ for j=1:length(vv)
 	a=vv(jplus)-outward;
 
 	tmp_pols=nm_cluster_to(a,b,m,beta); 
-	inds=find(abs(tmp_pols-b)<2e-16); tmp_pols(inds)=0;
+	inds=find(abs(tmp_pols-b)<2*eps); tmp_pols(inds)=0;
 	nm_pols=[nm_pols,tmp_pols];
 end
 
@@ -78,18 +78,19 @@ F=@(z)-up(z,s);
 tic
 [uh,residuals]=solve_mhe(cols,F,r_pols,r_orders,nm_pols,s);
 u=@(z)uh(z)+up(z,s); % Function handle of the solution
-fprintf('Helmholtz problem solved in %.2f\n',toc)
+fprintf('Modified Helmholtz problem solved in %.2f\n',toc)
 
 % Plot particular/homogenous part and solution
 bds=[-4,4];
-zz=linspace(bds(1),bds(2),300);
+gridres=100;
+zz=linspace(bds(1),bds(2),gridres);
 Z=zz+1i*zz.';
 
 tic
 Up=up(Z,s);
 Uh=uh(Z);
 U=Up+Uh;
-fprintf('Helmholtz problem evaluted on grid in %.2f\n',toc)
+fprintf('Modified Helmholtz problem evaluted on grid in %.2f\n',toc)
 
 figure(2); clf
 tiledlayout(1,3)
@@ -113,7 +114,6 @@ axis equal; axis([bds,bds]); title('$\tilde{u}=\tilde{u}_p+\tilde{u}_h$','interp
 hold on; fill(real(vv),imag(vv),'w')
 
 % Get oversampled grid on boundary and evaluate
-
 N_s_halfedge=3*N_c_halfedge;
 samps=[];
 bdp=[]; % Boundary parametrization
@@ -205,7 +205,6 @@ function out = nm_cluster_to(a,b,N,beta)
 
 	rate(rate==0)=[];
 	tmp=(b-a)*(1-rate)+a;
-	% inds = abs(b - tmp) > 1e-9;
 	out=tmp;
 end
 
