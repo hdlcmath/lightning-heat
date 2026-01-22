@@ -82,7 +82,7 @@ fprintf('Modified Helmholtz problem solved in %.2f\n',toc)
 
 % Plot particular/homogenous part and solution
 bds=[-4,4];
-gridres=100;
+gridres=200;
 zz=linspace(bds(1),bds(2),gridres);
 Z=zz+1i*zz.';
 
@@ -134,6 +134,7 @@ semilogy(bdp,abs(real(U_oversampled)),'r-','displayname','real')
 semilogy(bdp,abs(imag(U_oversampled)),'b-','displayname','imag')
 grid on
 yline(max(abs(U_oversampled)),'k--','Einf')
+title('Relative boundary error')
 fprintf('Einf error: %.6e\n',max(abs(U_oversampled)))
 
 %% Functions
