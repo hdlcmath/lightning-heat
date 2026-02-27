@@ -133,9 +133,10 @@ hold on
 semilogy(bdp,abs(real(U_oversampled)),'r-','displayname','real')
 semilogy(bdp,abs(imag(U_oversampled)),'b-','displayname','imag')
 grid on
-yline(max(abs(U_oversampled)),'k--','Einf')
+yline(max(abs(U_oversampled)),'k--','Einf','handlevisibility','off')
 title('Relative boundary error')
 fprintf('Einf error: %.6e\n',max(abs(U_oversampled)))
+legend
 
 %% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -154,7 +155,7 @@ function [uh,residuals]=solve_mhe(col,F,r_pols,r_order,nm_pols,s)
 	normA=vecnorm(A); scaledA=A./normA;
 	coefs=scaledA\col_val;
 	uh=@(z)eval_solution(z,coefs./normA(:));
-	residuals=0;
+	residuals=scaledA*coefs-col_val;
 
 	function out=eval_solution(z,coefs)
 		zz=z(:);

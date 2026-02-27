@@ -169,13 +169,13 @@ end
 U_oversampled=u_heat(samps);
 
 figure(4); clf;
-semilogy(bdp,abs(U_oversampled),'k.-')
+semilogy(bdp,abs(U_oversampled),'k-','Displayname','Oversampled error')
 hold on
 grid on
-yline(max(abs(U_oversampled)),'k--','Einf')
+yline(max(abs(U_oversampled)),'k--','Einf','handlevisibility','off')
 title('Relative boundary error')
 fprintf('Einf error: %.6e\n',max(abs(U_oversampled)))
-
+legend
 
 %% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,7 +223,7 @@ function [uh,residuals]=solve_mhe(col,F,r_pols,r_order,nm_pols,s)
 	coefs=scaledA\col_val;
 	
 	uh=@(z)eval_solution(z,coefs./normA(:));
-	residuals=0;
+	residuals=scaledA*coefs-col_val;
 
 	function out=eval_solution(z,coefs)
 		zz=z(:);
