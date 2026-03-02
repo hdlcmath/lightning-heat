@@ -73,7 +73,7 @@ plot(cols,'r.','displayname','Collocation Points');
 legend
 
 % Setting up the problem
-source=3+2i;
+source=2+2i;
 up=@(z,s)psi(0,z,source,s);
 
 uh_mhe=cell(1,M);

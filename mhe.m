@@ -70,7 +70,7 @@ plot(cols,'r.','displayname','Collocation Points');
 legend
 
 % Setting up the problem
-source=3+2i;
+source=2+2i;
 up=@(z,s)psi(0,z,source,s);
 
 s=-10+8i;
